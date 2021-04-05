@@ -1,0 +1,50 @@
+	.data
+    .type	n, %object
+    .size	n, 1
+
+    .type	m, %object
+    .size	m, 1
+n:  .xword 7
+m:  .xword 1
+	.text
+	.global main
+	.global fib
+	.arch armv8-a+fp+simd
+	.type main, %function
+
+
+main:
+	ADRP X0,n
+	ADD X0, X0, :lo12:n
+	LDUR X0, [X0, #0]    // X0 = N
+
+	ADRP X4,m
+	ADD X4, X4, :lo12:m
+	LDUR X4, [X4, #0]    // X4 = 1
+
+	SUB X1, X1, X1       // Initialization of X1 = result
+
+    SUB X3, X3, X3
+    BL FIB
+
+    B EXIT
+//----------------------------Recursive function--------------------
+FIB:
+   SUB SP, SP, #16
+   STUR X30, [SP, #0]  //Save return @ in SP so we can be able to exit recursive fib
+   SUBS X0, X0, #1
+   B.GT LABEL
+   B END
+
+LABEL:
+   ADD X1, X4, X3     // X1 = Fib(n-1) + Fib(n-2)
+   MOV X3, X4         // Fib(n-1) becomes fib(n-2)
+   MOV X4, X1         // result becomes Fib(n-1)
+   BL FIB             // return Fib(n-1) + Fin(n-2)
+
+END:
+   LDUR X30, [SP, #0]  //Restore X30 from SP
+   ADD SP, SP, #16
+   BR X30
+
+EXIT:
